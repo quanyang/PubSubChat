@@ -1,0 +1,152 @@
+    <div class="chat">
+        <div class="chat-overlay">Connecting...</div>
+        <div class="chat-logs">
+            <div class="logs">
+            </div>
+            <textarea placeholder="Send a message" class="message-box" maxlength="300" disabled></textarea>
+        </div>
+    </div>
+    <script>
+    $(function() {
+        initChat();
+    });
+
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+        s4() + '-' + s4() + s4() + s4();
+    }
+    
+    function initChat() {
+        var chat_uuid = typeof c_username !== "undefined"? c_username: guid();
+        var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
+        var color = colors[Math.floor(Math.random() * colors.length)];
+
+        function htmlEncode( html ) {
+            return document.createElement( "a" ).appendChild( 
+                document.createTextNode( html ) ).parentNode.innerHTML.replace(/"/g,"\&quot\;");
+        };
+
+        Date.prototype.timeNow = function () {
+            return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+        };
+
+        function linkify(text){
+            if (text) {
+                text = text.replace(
+                    /((https?\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/gi,
+                    function(url){
+                        var full_url = url;
+                        if (!full_url.match("^https?:\/\/")) {
+                            full_url = "http://" + full_url;
+                        }
+                        return "<a target=\"_blank\" href=\"" + full_url + "\">" + url + "</a>";
+                    }
+                    );
+            }
+            return text;
+        }
+
+        function insertMessage( message ) {
+            var elem = $(".logs");
+            var atBottom = (elem[0].scrollHeight - elem.scrollTop() <= elem.outerHeight() + 20 );
+            $(".logs").append(message); 
+            if (atBottom) {
+                elem.scrollTop(elem[0].scrollHeight);
+            }
+        };
+
+        function info(msg) {
+            insertMessage("<div class=\"info\">"+msg+"</div>");
+        };
+
+        function message(msg,time) {
+            try {
+                var m = msg;
+                var t = new Date(parseInt(time)/10000);
+                var isRegistered = (m[1][0] == "*");
+
+                if (m[0]=="message") {
+                    insertMessage("<div class=\"messages\"><span class=\"time\">"+t.timeNow()+"</span><span class=\"author chat-"+htmlEncode(m[3].substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>"+htmlEncode(m[1].substring(1,21)):htmlEncode(m[1].substring(0,20)))+"</span>: "+linkify(htmlEncode(m[2].substring(0,300)))+"</div>");
+                } else if (msg[0]=="info") {
+                    info(m[1]);
+                }
+            } catch (e){
+            }
+        };
+
+        $(".message-box").on("keypress", function(event) {
+            var key = event.keyCode;
+            var message = $.trim($(".message-box").val());
+            if (key == 13 && !event.shiftKey && message !== "") {
+                pubnub.publish({
+                    channel :  "griddit-chat-write",
+                    message : ["griddit-chat-read-"+window.location.href.hashCode(),"message",chat_uuid,message,color]
+                });
+                $(".message-box").val("");
+                event.preventDefault();
+                return false;
+            }
+            else {
+                return true;
+            };
+        });
+
+        function connected(m) {
+            $('.chat-overlay').hide();
+            $('.message-box').prop("disabled",false);
+            pubnub.publish({
+                channel :  "griddit-chat-write",
+                message : ["griddit-chat-read-"+window.location.href.hashCode(),"join",chat_uuid]
+            });
+            pubnub.history({
+                channel: "griddit-chat-read-"+window.location.href.hashCode(),
+                callback: function(m){
+                    var startDate = new Date(parseInt(m[1])/10000);
+                    var endDate = new Date(parseInt(m[2])/10000);
+                    info("Showing message history starting from "+startDate);
+                    m[0].forEach(function(msg) {
+                        message(msg.message,msg.timetoken);
+                    });
+                    info("End of message history from "+startDate+" to "+endDate+".");
+                    info("Welcome to the chat!");
+                },
+                include_token: true,
+                count: 100,
+                reverse: false
+            });
+        }
+
+        pubnub.subscribe({
+            channel :  ["griddit-chat-read-"+window.location.href.hashCode(),chat_uuid.hashCode()],
+            'message' : function(m,v) { message(m,v[1]); },
+            'connect' : function(m,v) { 
+                if (m == "griddit-chat-read-"+window.location.href.hashCode()) {
+                    connected(m); 
+                }
+            },
+            'disconnect' : function(m) {
+                insertMessage("<div class=\"info\">You've been disconnected!</div>"); 
+            },
+            'reconnect' : function(m) {
+                insertMessage("<div class=\"info\">You've been reconnected to the channel!</div>"); 
+            }
+        }); 
+        function unsubscribeChat() {
+            pubnub.unsubscribe({
+                channel :  ["griddit-chat-read-"+window.location.href.hashCode(),chat_uuid.hashCode()]
+            });
+            pubnub.publish({
+                channel :  "griddit-chat-write",
+                message : ["griddit-chat-read-"+window.location.href.hashCode(),"leave",chat_uuid]
+            });
+        }
+        $(window).bind('beforeunload', function(){
+            unsubscribeChat();
+        });
+    }
+    </script>
