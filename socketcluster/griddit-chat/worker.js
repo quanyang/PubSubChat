@@ -3,6 +3,9 @@ var express = require('express');
 var serveStatic = require('serve-static');
 var path = require('path');
 
+var connectMsg = "Info: %s has joined the chatroom.";
+var disconnectMsg = "Info: %s has left the chatroom.";
+
 module.exports.run = function (worker) {
   console.log('   >> Worker PID:', process.pid);
   var app = require('express')();
@@ -10,25 +13,41 @@ module.exports.run = function (worker) {
   var scServer = worker.scServer;
   app.use(serveStatic(path.resolve(__dirname, 'public')));
   httpServer.on('request', app);
-  var count = 0;
 
-  /*
-    In here we handle our incoming realtime connections and listen for events.
-    */
-    scServer.on('connection', function (socket) {  
-      console.log(socket.id);
-      console.log('User connected');
-      socket.on('info', function (data) {
-        scServer.global.publish(data.channel, {type: "info", msg:data.msg});
-      });
-      socket.on('chat', function (data) {
-        var time = new Date();
-        scServer.global.publish(data.channel, data);
-        console.log('Chat:', data,time.getTime());
-      });
-      socket.on('disconnect', function () {
-        console.log('User disconnected');
-      });
+  scServer.on('connection', function (socket) {  
+    console.log('User connected');
+    //console.log(socket.id);
+    var authToken = socket.getAuthToken();
+    socket.on('auth', function(data,res) {
+      //Validate user
+      // Check data.username
+      socket.setAuthToken({username: data.username});
     });
 
-  };
+    //Blocks publish except for server.
+    scServer.addMiddleware(scServer.MIDDLEWARE_PUBLISH_IN, function (req, next) {
+      next(true);
+    });
+
+    socket.on('connected', function (data) {
+      if (authToken){
+        scServer.global.publish(data.channel, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
+      }
+    });
+
+    socket.on('chat', function (data) {
+      var time = new Date();
+      data.username = authToken.username;
+      data.time = time.getTime();
+      data.type = "message";
+      scServer.global.publish(data.channel, data);
+      console.log('Chat:', data);
+    });
+
+    socket.on('disconnect', function () {
+      console.log('User disconnected');
+      //scServer.global.publish(data.channel, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
+    });
+  });
+
+};

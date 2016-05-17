@@ -33,30 +33,30 @@
     var color = colors[Math.floor(Math.random() * colors.length)];
     var randomInt = Math.floor((Math.random() * 10000) + 1000);
     var user = typeof username !== "undefined"? username: "Guest_"+randomInt;
-    var socket = socketCluster.connect({
-      autoReconnect: true,
-      customData: {username:user,channel:channel},
-      rejectUnauthorized: false // Only necessary during debug if using a self-signed certificate
-    });
+    var socket = socketCluster.connect();
     var chatChannel = socket.subscribe(location.href.hashCode());
 
     socket.on('error', function (err) {
       throw 'Socket error - ' + err; 
     });
 
-    socket.on('connect', function () {
+    socket.on('connect', function (status) {
+      if (!status.isAuthenticated) {
+        socket.emit('auth', {username:user});
+      } 
       $('.chat-overlay').hide();
       $('.message-box').prop("disabled",false);
       info("Welcome to the chat!");
-      socket.emit('info', {channel: channel, msg:"Connected"});
+      socket.emit('connected', {channel: channel});
     });
 
     chatChannel.watch(function (data) {  
       message = data;
       if (message.type == "info") {
         info(message.msg);
-      } else {
-        renderMessage(message.msg, message.time,message.color,message.username,message.type);
+      } else { 
+        var t = new Date(message.time);
+        renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
       }
     });
 
@@ -65,12 +65,20 @@
       var message = $.trim($(".message-box").val());
       if (key == 13 && !event.shiftKey && message !== "") {
         var d = new Date();
+        socket.publish(location.href.hashCode(),{ 
+          channel: location.href.hashCode(),
+          msg:message,
+          color:color,
+          time:0,
+          username:"A",
+          type:"message"
+        }, function(err) {
+          console.log(err);
+        })
         socket.emit('chat', { 
           channel: location.href.hashCode(),
           msg:message,
-          time:d.timeNow(),
-          color:color,
-          username: user
+          color:color
         });
         $(".message-box").val("");
         event.preventDefault();
