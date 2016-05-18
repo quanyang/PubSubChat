@@ -30,7 +30,10 @@
   function initChat() {
     var channel = location.href.hashCode();
     var user = typeof username !== "undefined"? username: "";
-    var socket = socketCluster.connect();
+    var socket = socketCluster.connect({
+      secure: true,
+      port: 443
+    });
     var chatChannel = socket.subscribe(location.href.hashCode());
 
     socket.on('error', function (err) {
