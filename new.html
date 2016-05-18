@@ -1,98 +1,121 @@
 
 <div class="chat">
-    <div class="chat-overlay">Connecting...</div>
-    <div class="chat-logs">
-        <div class="logs">
-        </div>
-        <textarea placeholder="Send a message" class="message-box" maxlength="300" disabled></textarea>
-    </div>
+	<div class="chat-overlay">Connecting...</div>
+	<div class="chat-logs">
+		<div class="logs">
+		</div>
+		<textarea placeholder="Send a message" class="message-box" maxlength="300" disabled></textarea>
+	</div>
 </div>
 <script>
 $(function() {
-    initChat();
+	initChat();
 });
+String.prototype.hashCode = function() {
+	for(var ret = 0, i = 0, len = this.length; i < len; i++) {
+		ret = (31 * ret + this.charCodeAt(i)) << 0;
+	}
+	return ret;
+};
 function initChat() {
-    var chatRef = new Firebase('https://griddit.firebaseio.com/chat/'+window.location.href.hashCode());
-    var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
-    var color = colors[Math.floor(Math.random() * colors.length)];
+	var channel = location.href.hashCode();
+	var user = typeof username !== "undefined"? username: "";
+	var socket = socketCluster.connect();
+	var chatChannel = socket.subscribe(location.href.hashCode());
 
-    var randomInt = Math.floor((Math.random() * 10000) + 1000);
-    var user = typeof username !== "undefined"? username: "Guest_"+randomInt;
+	socket.on('error', function (err) {
+		throw 'Socket error - ' + err; 
+	});
 
-    chatRef.on('child_added', function(snapshot) {
-        $('.chat-overlay').hide();
-        $('.message-box').prop("disabled",false);
-        var message = snapshot.val();
-        renderMessage(message.msg, message.time,message.color,message.username,message.type);
-    });
-    $('.chat-overlay').hide();
-    $('.message-box').prop("disabled",false);
-    $(".message-box").on("keypress", function(event) {
-        var key = event.keyCode;
-        var message = $.trim($(".message-box").val());
-        if (key == 13 && !event.shiftKey && message !== "") {
-            var d = new Date();
-            chatRef.push({msg:message,time:d.timeNow(),color:color,username:user,type:"message"});
-            $(".message-box").val("");
-            event.preventDefault();
-            return false;
-        }
-        else {
-            return true;
-        };
-    });
+	socket.on('connect', function (status) {
+		if (!status.isAuthenticated) {
+			socket.emit('auth', {username:user});
+		} 
+		$('.chat-overlay').hide();
+		$('.message-box').prop("disabled",false);
+		info("Welcome to the chat!");
+	});
+
+	chatChannel.watch(function (data) {  
+		message = data;
+		if (message.type == "info") {
+			info(message.msg);
+		} else { 
+			var t = new Date(message.time);
+			renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
+		}
+	});
+
+	$(".message-box").on("keypress", function(event) {
+		var key = event.keyCode;
+		var message = $.trim($(".message-box").val());
+		if (key == 13 && !event.shiftKey && message !== "") {
+			var d = new Date();
+			socket.emit('chat', { 
+				channel: (location.origin+location.pathname+locatiom.search).hashCode(),
+				msg:message
+			});
+			$(".message-box").val("");
+			event.preventDefault();
+			return false;
+		}
+		else {
+			return true;
+		};
+	});
 
 
-    Date.prototype.timeNow = function () {
-        return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
-    };
+	Date.prototype.timeNow = function () {
+		return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+	};
 
-    function htmlEncode( html ) {
-        return document.createElement( "a" ).appendChild( 
-                                                         document.createTextNode( html ) ).parentNode.innerHTML.replace(/"/g,"\&quot\;");
-    };
+	function htmlEncode(html) {
+		return document.createElement("a").appendChild( 
+				document.createTextNode(html)).parentNode.innerHTML.replace(/"/g,"\&quot\;");
+	};
 
-    function linkify(text){
-        if (text) {
-            text = text.replace(
-                                /((https?\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/gi,
-                                function(url){
-                                    var full_url = url;
-                                    if (!full_url.match("^https?:\/\/")) {
-                                        full_url = "http://" + full_url;
-                                    }
-                                    return "<a target=\"_blank\" href=\"" + full_url + "\">" + url + "</a>";
-                                }
-                                );
-        }
-        return text;
-    }
-    function insertMessage( message ) {
-        var elem = $(".logs");
-        var atBottom = (elem[0].scrollHeight - elem.scrollTop() <= elem.outerHeight() + 20 );
-        $(".logs").append(message); 
-        if (atBottom) {
-            elem.scrollTop(elem[0].scrollHeight);
-        }
-    };
+	function linkify(text){
+		if (text) {
+			text = text.replace(
+					/((https?\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/gi,
+					function(url){
+						var full_url = url;
+						if (!full_url.match("^https?:\/\/")) {
+							full_url = "http://" + full_url;
+						}
+						return "<a target=\"_blank\" href=\"" + full_url + "\">" + url + "</a>";
+					}
+					);
+		}
+		return text;
+	}
+	function insertMessage( message ) {
+		var elem = $(".logs");
+		var atBottom = (elem[0].scrollHeight - elem.scrollTop() <= elem.outerHeight() + 20 );
+		$(".logs").append(message); 
+		if (atBottom) {
+			elem.scrollTop(elem[0].scrollHeight);
+		}
+	};
 
-    function info(msg) {
-        insertMessage("<div class=\"info\">"+msg+"</div>");
-    };
+	function info(msg) {
+		insertMessage("<div class=\"info\">"+msg+"</div>");
+	};
 
-    function renderMessage(msg,time,color,username,type) {
-        try {
-            var m = msg;
-            var t = time;
-                var isRegistered = false;// (m[1][0] == "*");
+	function renderMessage(msg,time,color,username,type) {
+		try {
+			var m = msg;
+			var t = time;
+			var isRegistered = false;// (m[1][0] == "*");
 
-                if (type=="message") {
-                    insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>"+htmlEncode(username.substring(1,21)):htmlEncode(username.substring(0,20)))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
-                } else if (type=="info") {
-                    info(m);
-                }
-            } catch (e){
-            }
-        };
+			if (type=="message") {
+				insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>"+htmlEncode(username.substring(1,21)):htmlEncode(username.substring(0,20)))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
+			} else if (type=="info") {
+				info(m);
+			}
+		} catch (e){
+		}
+	};
 }
-        </script>
+
+</script>
