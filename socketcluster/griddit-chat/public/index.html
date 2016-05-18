@@ -29,10 +29,7 @@
   };
   function initChat() {
     var channel = location.href.hashCode();
-    var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
-    var color = colors[Math.floor(Math.random() * colors.length)];
-    var randomInt = Math.floor((Math.random() * 10000) + 1000);
-    var user = typeof username !== "undefined"? username: "Guest_"+randomInt;
+    var user = typeof username !== "undefined"? username: "";
     var socket = socketCluster.connect();
     var chatChannel = socket.subscribe(location.href.hashCode());
 
@@ -47,7 +44,6 @@
       $('.chat-overlay').hide();
       $('.message-box').prop("disabled",false);
       info("Welcome to the chat!");
-      socket.emit('connected', {channel: channel});
     });
 
     chatChannel.watch(function (data) {  
@@ -65,20 +61,9 @@
       var message = $.trim($(".message-box").val());
       if (key == 13 && !event.shiftKey && message !== "") {
         var d = new Date();
-        socket.publish(location.href.hashCode(),{ 
-          channel: location.href.hashCode(),
-          msg:message,
-          color:color,
-          time:0,
-          username:"A",
-          type:"message"
-        }, function(err) {
-          console.log(err);
-        })
         socket.emit('chat', { 
-          channel: location.href.hashCode(),
-          msg:message,
-          color:color
+          channel: (location.origin+location.pathname+locatiom.search).hashCode(),
+          msg:message
         });
         $(".message-box").val("");
         event.preventDefault();
@@ -94,9 +79,9 @@
       return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
     };
 
-    function htmlEncode( html ) {
-      return document.createElement( "a" ).appendChild( 
-                                                       document.createTextNode( html ) ).parentNode.innerHTML.replace(/"/g,"\&quot\;");
+    function htmlEncode(html) {
+      return document.createElement("a").appendChild( 
+          document.createTextNode(html)).parentNode.innerHTML.replace(/"/g,"\&quot\;");
     };
 
     function linkify(text){
