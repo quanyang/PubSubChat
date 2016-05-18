@@ -20,11 +20,7 @@ function generateGuestId() {
 
 module.exports.run = function (worker) {
   console.log('   >> Worker PID:', process.pid);
-  var app = require('express')();
-  var httpServer = worker.httpServer;
   var scServer = worker.scServer;
-  app.use(serveStatic(path.resolve(__dirname, 'public')));
-  httpServer.on('request', app);
 
   scServer.on('connection', function (socket) {  
     var authToken = socket.getAuthToken();
@@ -60,7 +56,7 @@ module.exports.run = function (worker) {
         scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
       }
     });
-    
+
   });
 
 };
