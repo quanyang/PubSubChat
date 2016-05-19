@@ -124,7 +124,7 @@ module.exports.run = function (worker) {
       }
       if (authToken){
         if (data in usersList) {
-          usersList[data] = usersList[data].filter(function(value) { return value == authToken.username; });
+          usersList[data] = usersList[data].filter(function(value) { return value != authToken.username; });
         }
         scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
       }
