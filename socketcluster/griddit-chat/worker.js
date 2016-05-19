@@ -9,7 +9,7 @@ var connectMsg = "Info: %s has joined the chatroom.";
 var disconnectMsg = "Info: %s has left the chatroom.";
 var welcomeMsg = "You are %s!";
 var registerMsg = "Register <a href='http://griddit.io/users/new'>here</a> for your own unique username!";
-var userListMsg = "Info: Users in channel: %s.";
+var userListMsg = "Users online: %s";
 var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
@@ -114,6 +114,7 @@ module.exports.run = function (worker) {
           usersList[data] = [authToken.username];
         }
         scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
+        printChannelUserList(socket,{channel:data});
       }
     });
 
