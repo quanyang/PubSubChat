@@ -7,15 +7,17 @@ var crypto = require('crypto')
 
 var connectMsg = "Info: %s has joined the chatroom.";
 var disconnectMsg = "Info: %s has left the chatroom.";
+var welcomeMsg = "You are %s!";
+var registerMsg = "Register <a href='http://griddit.io/users/new'>here</a> for your own unique username!";
+var userListMsg = "Info: Users in channel: %s.";
 var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
 var commands = {"/who":printChannelUserList};
-
 var usersList = {};
 
 function printChannelUserList(socket,data) {
-  socket.emit('info', {msg: "TEST"});
+  socket.emit('info', {msg: userListMsg.replace("%s",usersList[data.channel].join(", "))});
 }
 
 function generateRandomColor() {
@@ -71,9 +73,12 @@ module.exports.run = function (worker) {
             username = assumedUsername;
           }
           socket.setAuthToken({username: username, color: generateRandomColor()});
+          socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         });
       } else {
         socket.setAuthToken({username: username, color: generateRandomColor()});
+        socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
+        socket.emit('info', {msg: registerMsg});
       }
     });
 
@@ -83,7 +88,7 @@ module.exports.run = function (worker) {
       }
       if (authToken) {
         var msg = data.msg;
-        var cmd = msg.split(" ")[0];
+        var cmd = msg.split(" ")[0].toLowerCase();
         if (cmd in commands) {
           commands[cmd](socket,data);
         } else {
@@ -103,6 +108,7 @@ module.exports.run = function (worker) {
       }
       if (authToken){
         if (data in usersList) {
+          usersList[data] = usersList[data].filter(function(value) { return value == authToken.username; });
           usersList[data].push(authToken.username);
         } else {
           usersList[data] = [authToken.username];
