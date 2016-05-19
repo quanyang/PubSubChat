@@ -25,7 +25,6 @@ function initChat() {
       secure: true,
       port: 8000
   });
-    var chatChannel = socket.subscribe(channel);
 
     socket.on('error', function (err) {
       throw 'Socket error - ' + err; 
@@ -38,17 +37,19 @@ function initChat() {
     $('.chat-overlay').hide();
     $('.message-box').prop("disabled",false);
     info("Welcome to the chat!");
+    var chatChannel = socket.subscribe(channel);
+    chatChannel.watch(function (data) {  
+        message = data;
+        if (message.type == "info") {
+          info(message.msg);
+      } else { 
+          var t = new Date(message.time);
+          renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
+      }
+  });
 });
 
-    chatChannel.watch(function (data) {  
-      message = data;
-      if (message.type == "info") {
-        info(message.msg);
-    } else { 
-        var t = new Date(message.time);
-        renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
-    }
-});
+    
 
     $(".message-box").on("keypress", function(event) {
       var key = event.keyCode;

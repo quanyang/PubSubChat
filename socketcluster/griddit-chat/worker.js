@@ -27,7 +27,11 @@ module.exports.run = function (worker) {
   httpServer.on('request', app);
 
   scServer.on('connection', function (socket) {  
-    var authToken = socket.getAuthToken();
+
+    var authToken = null;
+    if (socket.authState == "authenticated") {
+      authToken = socket.getAuthToken();
+    }
 
     //Blocks publish except for server.
     scServer.addMiddleware(scServer.MIDDLEWARE_PUBLISH_IN, function (req, next) {
@@ -41,12 +45,14 @@ module.exports.run = function (worker) {
     });
 
     socket.on('chat', function (data) {
-      var time = new Date();
-      data.username = authToken.username;
-      data.color = authToken.color;
-      data.time = time.getTime();
-      data.type = "message";
-      scServer.global.publish(data.channel, data);
+      if (authToken) {
+        var time = new Date();
+        data.username = authToken.username;
+        data.color = authToken.color;
+        data.time = time.getTime();
+        data.type = "message";
+        scServer.global.publish(data.channel, data);
+      }
     });
 
     socket.on('subscribe', function (data) {
@@ -60,7 +66,7 @@ module.exports.run = function (worker) {
         scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
       }
     });
-    
+
   });
 
 };
