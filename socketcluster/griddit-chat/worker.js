@@ -9,8 +9,8 @@ var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
 function generateRandomColor() {
-    var color = colors[Math.floor(Math.random() * colors.length)];
-    return color;
+  var color = colors[Math.floor(Math.random() * colors.length)];
+  return color;
 }
 
 function generateGuestId() {
@@ -42,7 +42,7 @@ module.exports.run = function (worker) {
       //Validate user
       // Check data.username
       socket.setAuthToken({username: generateGuestId(), color: generateRandomColor()});
-      console.log("Authing" + socket.getAuthToken().username;
+      console.log("Authing" + socket.getAuthToken().username);
       res();
     });
 
