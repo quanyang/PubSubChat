@@ -30,15 +30,12 @@ function initChat() {
       throw 'Socket error - ' + err; 
   });
 
-    socket.on('connect', function (status) {
-      if (!status.isAuthenticated) {
-        socket.emit('auth', {username:user});
-    } 
-    $('.chat-overlay').hide();
-    $('.message-box').prop("disabled",false);
-    info("Welcome to the chat!");
-    var chatChannel = socket.subscribe(channel);
-    chatChannel.watch(function (data) {  
+    function connected() {
+      $('.chat-overlay').hide();
+      $('.message-box').prop("disabled",false);
+      info("Welcome to the chat!");
+      var chatChannel = socket.subscribe(channel);
+      chatChannel.watch(function (data) {  
         message = data;
         if (message.type == "info") {
           info(message.msg);
@@ -47,11 +44,22 @@ function initChat() {
           renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
       }
   });
+  }
+
+  socket.on('connect', function (status) {
+      if (!status.isAuthenticated) {
+        socket.emit('auth', {username:user}, function(err) {
+          if (!err) {
+            connected();
+        }
+    });
+    } 
+    connected();
 });
 
-    
 
-    $(".message-box").on("keypress", function(event) {
+
+  $(".message-box").on("keypress", function(event) {
       var key = event.keyCode;
       var message = $.trim($(".message-box").val());
       if (key == 13 && !event.shiftKey && message !== "") {
@@ -70,7 +78,7 @@ function initChat() {
 });
 
 
-    Date.prototype.timeNow = function () {
+  Date.prototype.timeNow = function () {
       return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
   };
 

@@ -40,10 +40,7 @@
       throw 'Socket error - ' + err; 
     });
 
-    socket.on('connect', function (status) {
-      if (!status.isAuthenticated) {
-        socket.emit('auth', {username:user});
-      } 
+    function connected() {
       $('.chat-overlay').hide();
       $('.message-box').prop("disabled",false);
       info("Welcome to the chat!");
@@ -57,9 +54,20 @@
           renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
         }
       });
+    }
+
+    socket.on('connect', function (status) {
+      if (!status.isAuthenticated) {
+        socket.emit('auth', {username:user}, function(err) {
+          if (!err) {
+            connected();
+          }
+        });
+      } 
+      connected();
     });
 
-    
+
 
     $(".message-box").on("keypress", function(event) {
       var key = event.keyCode;
