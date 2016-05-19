@@ -48,6 +48,7 @@ module.exports.run = function (worker) {
 
     socket.on('chat', function (data) {
       if (authToken) {
+        console.log(data);
         var time = new Date();
         data.username = authToken.username;
         data.color = authToken.color;
@@ -59,6 +60,7 @@ module.exports.run = function (worker) {
 
     socket.on('subscribe', function (data) {
       if (authToken){
+        console.log(data);
         scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
       }
     });
