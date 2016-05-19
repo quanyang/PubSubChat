@@ -9,126 +9,128 @@
 </div>
 <script>
 $(function() {
-    initChat();
+	initChat();
 });
 String.prototype.hashCode = function() {
-    for(var ret = 0, i = 0, len = this.length; i < len; i++) {
-      ret = (31 * ret + this.charCodeAt(i)) << 0;
-  }
-  return ret;
+	for(var ret = 0, i = 0, len = this.length; i < len; i++) {
+		ret = (31 * ret + this.charCodeAt(i)) << 0;
+	}
+	return ret;
 };
 function initChat() {
-    var channel = (location.origin+location.pathname).hashCode();
-    var user = typeof username !== "undefined"? username: "";
-    var socket = socketCluster.connect({
-      hostname: "griddit.io",
-      secure: true,
-      port: 8000
-  });
+	var channel = (location.origin+location.pathname).hashCode();
+	var user = typeof c_username !== "undefined"? c_username: guid();
+	var chatChannel = undefined;
+	var socket = socketCluster.connect({
+		hostname: "griddit.io",
+		secure: true,
+		port: 8000
+	});
 
-    socket.on('error', function (err) {
-      throw 'Socket error - ' + err; 
-  });
+	socket.on('error', function (err) {
+		throw 'Socket error - ' + err; 
+	});
 
-    function connected() {
-      $('.chat-overlay').hide();
-      $('.message-box').prop("disabled",false);
-      info("Welcome to the chat!");
-      var chatChannel = socket.subscribe(channel);
-      chatChannel.watch(function (data) {  
-        message = data;
-        if (message.type == "info") {
-          info(message.msg);
-      } else { 
-          var t = new Date(message.time);
-          renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
-      }
-  });
-  }
+	function connected() {
+		$('.chat-overlay').hide();
+		$('.message-box').prop("disabled",false);
+		chatChannel = socket.subscribe(channel,{waitForAuth: true});
+	}
 
-  socket.on('connect', function (status) {
-      if (!status.isAuthenticated) {
-        socket.emit('auth', {username:user}, function(err) {
-          if (!err) {
-            connected();
-        }
-    });
-    } 
-    connected();
-});
+	socket.on('authenticate', function() {
+		connected();
+	});
+
+	socket.on('subscribe', function(data) {
+    info("Welcome to the chat!");
+		socket.watch(data, function (data) {  
+			message = data;
+			if (message.type == "info") {
+				info(message.msg);
+			} else { 
+				var t = new Date(message.time);
+				renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
+			}
+		});
+	});
+
+	socket.on('connect', function (status) {
+		if (!status.isAuthenticated) {
+			socket.emit('auth', {username:user}, function(err) {
+			});
+		} 
+	});
+
+	$(".message-box").on("keypress", function(event) {
+		var key = event.keyCode;
+		var message = $.trim($(".message-box").val());
+		if (key == 13 && !event.shiftKey && message !== "") {
+			var d = new Date();
+			socket.emit('chat', { 
+				channel: channel,
+				msg:message
+			});
+			$(".message-box").val("");
+			event.preventDefault();
+			return false;
+		}
+		else {
+			return true;
+		};
+	});
 
 
+	Date.prototype.timeNow = function () {
+		return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+	};
 
-  $(".message-box").on("keypress", function(event) {
-      var key = event.keyCode;
-      var message = $.trim($(".message-box").val());
-      if (key == 13 && !event.shiftKey && message !== "") {
-        var d = new Date();
-        socket.emit('chat', { 
-          channel: channel,
-          msg:message
-      });
-        $(".message-box").val("");
-        event.preventDefault();
-        return false;
-    }
-    else {
-        return true;
-    };
-});
+	function htmlEncode(html) {
+		return document.createElement("a").appendChild( 
+				document.createTextNode(html)).parentNode.innerHTML.replace(/"/g,"\&quot\;");
+	};
 
+	function linkify(text){
+		if (text) {
+			text = text.replace(
+					/((https?\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/gi,
+					function(url){
+						var full_url = url;
+						if (!full_url.match("^https?:\/\/")) {
+							full_url = "http://" + full_url;
+						}
+						return "<a target=\"_blank\" href=\"" + full_url + "\">" + url + "</a>";
+					}
+					);
+		}
+		return text;
+	}
+	function insertMessage( message ) {
+		var elem = $(".logs");
+		var atBottom = (elem[0].scrollHeight - elem.scrollTop() <= elem.outerHeight() + 20 );
+		$(".logs").append(message); 
+		if (atBottom) {
+			elem.scrollTop(elem[0].scrollHeight);
+		}
+	};
 
-  Date.prototype.timeNow = function () {
-      return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
-  };
+	function info(msg) {
+		insertMessage("<div class=\"info\">"+msg+"</div>");
+	};
 
-  function htmlEncode(html) {
-      return document.createElement("a").appendChild( 
-                                                     document.createTextNode(html)).parentNode.innerHTML.replace(/"/g,"\&quot\;");
-  };
+	function renderMessage(msg,time,color,username,type) {
+		try {
+			var m = msg;
+			var t = time;
+			var isRegistered = false;// (m[1][0] == "*");
 
-  function linkify(text){
-      if (text) {
-        text = text.replace(
-                            /((https?\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/gi,
-                            function(url){
-                              var full_url = url;
-                              if (!full_url.match("^https?:\/\/")) {
-                                full_url = "http://" + full_url;
-                            }
-                            return "<a target=\"_blank\" href=\"" + full_url + "\">" + url + "</a>";
-                        }
-                        );
-    }
-    return text;
+			if (type=="message") {
+				insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>"+htmlEncode(username.substring(1,21)):htmlEncode(username.substring(0,20)))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
+			} else if (type=="info") {
+				info(m);
+			}
+		} catch (e){
+		}
+	};
 }
-function insertMessage( message ) {
-  var elem = $(".logs");
-  var atBottom = (elem[0].scrollHeight - elem.scrollTop() <= elem.outerHeight() + 20 );
-  $(".logs").append(message); 
-  if (atBottom) {
-    elem.scrollTop(elem[0].scrollHeight);
-}
-};
 
-function info(msg) {
-  insertMessage("<div class=\"info\">"+msg+"</div>");
-};
-
-function renderMessage(msg,time,color,username,type) {
-  try {
-    var m = msg;
-    var t = time;
-                var isRegistered = false;// (m[1][0] == "*");
-
-                if (type=="message") {
-                  insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>"+htmlEncode(username.substring(1,21)):htmlEncode(username.substring(0,20)))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
-              } else if (type=="info") {
-                  info(m);
-              }
-          } catch (e){
-          }
-      };
-  }
-
-  </script>
+</script>

@@ -27,12 +27,7 @@ module.exports.run = function (worker) {
   httpServer.on('request', app);
 
   scServer.on('connection', function (socket) {  
-
-    var authToken = null;
-    if (socket.authState == "authenticated") {
-      authToken = socket.getAuthToken();
-    }
-
+    var authToken = socket.getAuthToken();
     //Blocks publish except for server.
     scServer.addMiddleware(scServer.MIDDLEWARE_PUBLISH_IN, function (req, next) {
       next(true);
@@ -42,13 +37,15 @@ module.exports.run = function (worker) {
       //Validate user
       // Check data.username
       socket.setAuthToken({username: generateGuestId(), color: generateRandomColor()});
-      console.log("Authing" + socket.getAuthToken().username);
-      res();
+      console.log("Authing " + socket.getAuthToken().username);
     });
 
     socket.on('chat', function (data) {
+      if (!authToken) {
+        authToken = socket.getAuthToken();
+      }
+
       if (authToken) {
-        console.log(data);
         var time = new Date();
         data.username = authToken.username;
         data.color = authToken.color;
@@ -59,13 +56,20 @@ module.exports.run = function (worker) {
     });
 
     socket.on('subscribe', function (data) {
+      if (!authToken) {
+        authToken = socket.getAuthToken();
+      }
+      
       if (authToken){
-        console.log(data);
         scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
       }
     });
 
     socket.on('unsubscribe', function (data) {
+      if (!authToken) {
+        authToken = socket.getAuthToken();
+      }
+
       if (authToken){
         scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
       }

@@ -56,15 +56,15 @@
       });
     }
 
+    socket.on('authenticate', function() {
+      connected();
+    });
+
     socket.on('connect', function (status) {
       if (!status.isAuthenticated) {
         socket.emit('auth', {username:user}, function(err) {
-          if (!err) {
-            connected();
-          }
         });
       } 
-      connected();
     });
 
 
