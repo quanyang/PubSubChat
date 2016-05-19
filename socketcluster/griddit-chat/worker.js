@@ -3,6 +3,7 @@ var express = require('express');
 var serveStatic = require('serve-static');
 var path = require('path');
 var pg = require('pg');
+var crypto = require('crypto')
 
 var connectMsg = "Info: %s has joined the chatroom.";
 var disconnectMsg = "Info: %s has left the chatroom.";
@@ -51,14 +52,18 @@ module.exports.run = function (worker) {
     socket.on('auth', function(data,res) {
       //Validate user
       // Check data.username
-      var username = data.username;
-      if (username.substr(0,3) == "reg") {
-        data = username.split("_");
-        var assumedName = data.slice(1,data.length-1).join("_");
-        getSalt(assumedName);
+      var username = generateGuestId();
+      if (data.username.substr(0,3) == "reg") {
+        data = data.username.split("_");
+        var assumedUsername = data.slice(1,data.length-1).join("_");
+        var salt = getSalt(assumedUsername);
+        var hash = crypto.createHmac('sha1', 'chat').update(salt+assumedUsername).digest('hex')
+        console.log(hash,data[data.length-1]);
+        if (hash == data[data.length-1]) {
+          username = assumedUsername;
+        }
       }
-
-      socket.setAuthToken({username: generateGuestId(), color: generateRandomColor()});
+      socket.setAuthToken({username: username, color: generateRandomColor()});
       console.log("Authing " + socket.getAuthToken().username);
     });
 
