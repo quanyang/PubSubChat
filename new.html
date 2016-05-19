@@ -1,4 +1,3 @@
-
 <div class="chat">
 	<div class="chat-overlay">Connecting...</div>
 	<div class="chat-logs">
@@ -19,7 +18,7 @@ String.prototype.hashCode = function() {
 };
 function initChat() {
 	var channel = (location.origin+location.pathname).hashCode();
-	var user = typeof c_username !== "undefined"? c_username: guid();
+	var user = typeof c_username !== "undefined"? c_username: "";
 	var chatChannel = undefined;
 	var socket = socketCluster.connect({
 		hostname: "griddit.io",
@@ -43,15 +42,17 @@ function initChat() {
 
 	socket.on('subscribe', function(data) {
     info("Welcome to the chat!");
-		socket.watch(data, function (data) {  
-			message = data;
-			if (message.type == "info") {
-				info(message.msg);
-			} else { 
-				var t = new Date(message.time);
-				renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
-			}
-		});
+    if (socket.watchers(data).length == 0) { 
+  		socket.watch(data, function (data) {  
+  			message = data;
+  			if (message.type == "info") {
+  				info(message.msg);
+  			} else { 
+  				var t = new Date(message.time);
+  				renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type);
+  			}
+  		});
+    }
 	});
 
 	socket.on('connect', function (status) {
@@ -132,5 +133,4 @@ function initChat() {
 		}
 	};
 }
-
 </script>

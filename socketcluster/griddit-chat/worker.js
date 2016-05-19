@@ -2,6 +2,7 @@ var fs = require('fs');
 var express = require('express');
 var serveStatic = require('serve-static');
 var path = require('path');
+var pg = require('pg');
 
 var connectMsg = "Info: %s has joined the chatroom.";
 var disconnectMsg = "Info: %s has left the chatroom.";
@@ -16,6 +17,20 @@ function generateRandomColor() {
 function generateGuestId() {
   var randomInt = Math.floor((Math.random() * 10000) + 1000);
   return guestUsername.replace("%s",randomInt);
+}
+
+function getSalt(username) {
+  var client = new pg.Client(process.env.PUBNUB_DB_URL);
+  client.connect();
+  var query = client.query("SELECT salt from users where username = $1", [username]);
+
+  query.on('row', function(row) {
+    console.log(row);
+  });
+
+  query.on('end', function() { 
+    client.end();
+  });
 }
 
 module.exports.run = function (worker) {
@@ -36,6 +51,13 @@ module.exports.run = function (worker) {
     socket.on('auth', function(data,res) {
       //Validate user
       // Check data.username
+      var username = data.username;
+      if (username.substr(0,3) == "reg") {
+        data = username.split("_");
+        var assumedName = data.slice(1,data.length-1).join("_");
+        getSalt(assumedName);
+      }
+
       socket.setAuthToken({username: generateGuestId(), color: generateRandomColor()});
       console.log("Authing " + socket.getAuthToken().username);
     });
@@ -44,7 +66,6 @@ module.exports.run = function (worker) {
       if (!authToken) {
         authToken = socket.getAuthToken();
       }
-
       if (authToken) {
         var time = new Date();
         data.username = authToken.username;
@@ -59,7 +80,6 @@ module.exports.run = function (worker) {
       if (!authToken) {
         authToken = socket.getAuthToken();
       }
-      
       if (authToken){
         scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
       }
@@ -69,7 +89,6 @@ module.exports.run = function (worker) {
       if (!authToken) {
         authToken = socket.getAuthToken();
       }
-
       if (authToken){
         scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
       }
