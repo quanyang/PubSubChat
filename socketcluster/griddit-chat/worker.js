@@ -24,14 +24,16 @@ function getSalt(username) {
   var client = new pg.Client(process.env.PUBNUB_DB_URL);
   client.connect();
   var query = client.query("SELECT salt from users where username = $1", [username]);
-
+  var salt = ""
   query.on('row', function(row) {
-    console.log(row);
+    salt = row.salt;
   });
 
   query.on('end', function() { 
     client.end();
   });
+  
+  return salt;
 }
 
 module.exports.run = function (worker) {
