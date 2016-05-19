@@ -28,13 +28,14 @@
     return ret;
   };
   function initChat() {
-    var channel = location.href.hashCode();
+    var channel = (location.origin+location.pathname).hashCode();
     var user = typeof username !== "undefined"? username: "";
     var socket = socketCluster.connect({
+      hostname: "griddit.io",
       secure: true,
-      port: 443
+      port: 8000
     });
-    var chatChannel = socket.subscribe(location.href.hashCode());
+    var chatChannel = socket.subscribe(channel);
 
     socket.on('error', function (err) {
       throw 'Socket error - ' + err; 
@@ -65,7 +66,7 @@
       if (key == 13 && !event.shiftKey && message !== "") {
         var d = new Date();
         socket.emit('chat', { 
-          channel: (location.origin+location.pathname+locatiom.search).hashCode(),
+          channel: channel,
           msg:message
         });
         $(".message-box").val("");

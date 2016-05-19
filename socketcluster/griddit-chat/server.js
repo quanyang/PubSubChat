@@ -1,6 +1,5 @@
 var argv = require('minimist')(process.argv.slice(2));
 var SocketCluster = require('socketcluster').SocketCluster;
-var fs = require('fs');
 
 var options = {
   workers: Number(argv.w) || Number(process.env.SOCKETCLUSTER_WORKERS) || 1,
@@ -12,13 +11,7 @@ var options = {
   workerController: process.env.SOCKETCLUSTER_WORKER_CONTROLLER || __dirname + '/worker.js',
   brokerController: process.env.SOCKETCLUSTER_BROKER_CONTROLLER || __dirname + '/broker.js',
   socketChannelLimit: Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
-  crashWorkerOnError: argv['auto-reboot'] != false,
-  protocol: 'https',
-  protocolOptions: {
-    key: fs.readFileSync('/home/dokku/griddit.io/tls/server.key', 'utf8'),
-    cert: fs.readFileSync('/home/dokku/griddit.io/tls/server.crt', 'utf8')
-  }
-
+  crashWorkerOnError: argv['auto-reboot'] != false
 };
 
 var SOCKETCLUSTER_OPTIONS;
