@@ -42,6 +42,7 @@ module.exports.run = function (worker) {
       //Validate user
       // Check data.username
       socket.setAuthToken({username: generateGuestId(), color: generateRandomColor()});
+      console.log("Authing" + socket.getAuthToken().username());
     });
 
     socket.on('chat', function (data) {
