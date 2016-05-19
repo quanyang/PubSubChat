@@ -20,20 +20,18 @@ function generateGuestId() {
   return guestUsername.replace("%s",randomInt);
 }
 
-function getSalt(username) {
+function getSalt(username,done) {
   var client = new pg.Client(process.env.PUBNUB_DB_URL);
   client.connect();
   var query = client.query("SELECT salt from users where username = $1", [username]);
   var salt = ""
   query.on('row', function(row) {
     salt = row.salt;
+    done(salt);
   });
-
   query.on('end', function() { 
     client.end();
   });
-  
-  return salt;
 }
 
 module.exports.run = function (worker) {
@@ -58,15 +56,19 @@ module.exports.run = function (worker) {
       if (data.username.substr(0,3) == "reg") {
         data = data.username.split("_");
         var assumedUsername = data.slice(1,data.length-1).join("_");
-        var salt = getSalt(assumedUsername);
-        var hash = crypto.createHmac('sha1', 'chat').update(salt+assumedUsername).digest('hex')
-        console.log(hash,data[data.length-1]);
-        if (hash == data[data.length-1]) {
-          username = assumedUsername;
-        }
+        getSalt(assumedUsername,function(salt) {
+          var hash = crypto.createHmac('sha1', 'chat').update(salt+assumedUsername).digest('hex')
+          console.log(hash,data[data.length-1]);
+          if (hash == data[data.length-1]) {
+            username = assumedUsername;
+          }
+          socket.setAuthToken({username: username, color: generateRandomColor()});
+          console.log("Authing " + socket.getAuthToken().username);
+        });
+      } else {
+        socket.setAuthToken({username: username, color: generateRandomColor()});
+        console.log("Authing " + socket.getAuthToken().username);
       }
-      socket.setAuthToken({username: username, color: generateRandomColor()});
-      console.log("Authing " + socket.getAuthToken().username);
     });
 
     socket.on('chat', function (data) {
