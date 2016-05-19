@@ -10,6 +10,14 @@ var disconnectMsg = "Info: %s has left the chatroom.";
 var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
+var commands = {"/who":printChannelUserList};
+
+var usersList = {};
+
+function printChannelUserList(socket,data) {
+  socket.emit('info', {msg: "TEST"});
+}
+
 function generateRandomColor() {
   var color = colors[Math.floor(Math.random() * colors.length)];
   return color;
@@ -51,23 +59,21 @@ module.exports.run = function (worker) {
 
     socket.on('auth', function(data,res) {
       //Validate user
-      // Check data.username
       var username = generateGuestId();
       if (data.username.substr(0,3) == "reg") {
+
         data = data.username.split("_");
         var assumedUsername = data.slice(1,data.length-1).join("_");
         getSalt(assumedUsername,function(salt) {
+
           var hash = crypto.createHmac('sha1', 'chat').update(salt+assumedUsername).digest('hex')
-          console.log(hash,data[data.length-1]);
           if (hash == data[data.length-1]) {
             username = assumedUsername;
           }
           socket.setAuthToken({username: username, color: generateRandomColor()});
-          console.log("Authing " + socket.getAuthToken().username);
         });
       } else {
         socket.setAuthToken({username: username, color: generateRandomColor()});
-        console.log("Authing " + socket.getAuthToken().username);
       }
     });
 
@@ -76,12 +82,18 @@ module.exports.run = function (worker) {
         authToken = socket.getAuthToken();
       }
       if (authToken) {
-        var time = new Date();
-        data.username = authToken.username;
-        data.color = authToken.color;
-        data.time = time.getTime();
-        data.type = "message";
-        scServer.global.publish(data.channel, data);
+        var msg = data.msg;
+        var cmd = msg.split(" ")[0];
+        if (cmd in commands) {
+          commands[cmd](socket,data);
+        } else {
+          var time = new Date();
+          data.username = authToken.username;
+          data.color = authToken.color;
+          data.time = time.getTime();
+          data.type = "message";
+          scServer.global.publish(data.channel, data);
+        }
       }
     });
 
@@ -90,6 +102,11 @@ module.exports.run = function (worker) {
         authToken = socket.getAuthToken();
       }
       if (authToken){
+        if (data in usersList) {
+          usersList[data].push(authToken.username);
+        } else {
+          usersList[data] = [authToken.username];
+        }
         scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
       }
     });
@@ -99,6 +116,9 @@ module.exports.run = function (worker) {
         authToken = socket.getAuthToken();
       }
       if (authToken){
+        if (data in usersList) {
+          usersList[data] = usersList[data].filter(function(value) { return value == authToken.username; });
+        }
         scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
       }
     });

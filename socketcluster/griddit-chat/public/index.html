@@ -67,8 +67,6 @@
       } 
     });
 
-
-
     $(".message-box").on("keypress", function(event) {
       var key = event.keyCode;
       var message = $.trim($(".message-box").val());
@@ -86,7 +84,6 @@
         return true;
       };
     });
-
 
     Date.prototype.timeNow = function () {
       return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();

@@ -40,6 +40,10 @@ function initChat() {
 		connected();
 	});
 
+  socket.on('info', function(data) {
+    info(data.msg);
+  });
+
 	socket.on('subscribe', function(data) {
     info("Welcome to the chat!");
     if (socket.watchers(data).length == 0) { 
