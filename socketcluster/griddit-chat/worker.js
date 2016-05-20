@@ -21,7 +21,7 @@ var historyLength = 2;
 function printChannelHistory(socket,data) {
   if (data.channel in history && history[data.channel].length > 0) {
     socket.emit('info', {msg: "Showing message history."});
-    for (var i=0;i<history[data.channel];++i) {
+    for (var i=0;i<history[data.channel].length;++i) {
       socket.emit('info', history[data.channel][i]);
     }
     socket.emit('info', {msg: "End of message history."});
