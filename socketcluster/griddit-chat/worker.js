@@ -114,7 +114,7 @@ module.exports.run = function (worker) {
       }
       if (authToken){
         if (data in usersList) {
-          usersList[data] = usersList[data].filter(function(value) { return value == authToken.username; });
+          usersList[data] = usersList[data].filter(function(value) { return value != authToken.username; });
           usersList[data].push(authToken.username);
         } else {
           usersList[data] = [authToken.username];
