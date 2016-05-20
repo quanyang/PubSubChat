@@ -16,7 +16,7 @@ var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 var commands = {"/who":printChannelUserList};
 var usersList = {};
 var history = {};
-var historyLength = 2;
+var historyLength = 100;
 
 function printChannelHistory(socket,data) {
   if (data.channel in history && history[data.channel].length > 0) {
