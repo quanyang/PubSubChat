@@ -126,7 +126,6 @@
       try {
         var m = msg;
         var t = time;
-
         if (type=="message") {
           insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>"+htmlEncode(username.substring(1,21)):htmlEncode(username.substring(0,20)))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
         } else if (type=="info") {

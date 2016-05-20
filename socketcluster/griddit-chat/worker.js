@@ -59,6 +59,11 @@ module.exports.run = function (worker) {
       next(true);
     });
 
+    socket.on('disconnect', function() {
+      //deauth everytime user disconnects.
+      socket.deauthenticate();
+    })
+
     socket.on('auth', function(data,res) {
       //Validate user
       var username = generateGuestId();
