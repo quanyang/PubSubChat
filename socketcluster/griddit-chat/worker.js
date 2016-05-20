@@ -81,12 +81,12 @@ module.exports.run = function (worker) {
       var username = generateGuestId();
       if (data.username.substr(0,3) == "reg") {
 
-        data = data.username.split("_");
-        var assumedUsername = data.slice(1,data.length-1).join("_");
+        usernameParts = data.username.split("_");
+        var assumedUsername = usernameParts.slice(1,usernameParts.length-1).join("_");
         getSalt(assumedUsername,function(salt) {
 
           var hash = crypto.createHmac('sha1', 'chat').update(salt+assumedUsername).digest('hex')
-          if (hash == data[data.length-1]) {
+          if (hash == usernameParts[usernameParts.length-1]) {
             username = assumedUsername;
           }
           socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: true});
