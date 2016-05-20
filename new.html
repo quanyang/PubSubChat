@@ -41,7 +41,13 @@ function initChat() {
 	});
 
   socket.on('info', function(data) {
-    info(data.msg);
+    message = data;
+    if (message.type == "message") {
+      var t = new Date(message.time);
+      renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type,message.isRegistered);
+    } else {
+      info(message.msg);
+    }
   });
 
 	socket.on('subscribe', function(data) {

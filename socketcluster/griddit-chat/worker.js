@@ -15,6 +15,18 @@ var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
 var commands = {"/who":printChannelUserList};
 var usersList = {};
+var history = {};
+var historyLength = 2;
+
+function printChannelHistory(socket,data) {
+  if (history[data.channel].length > 0) {
+    socket.emit('info', {msg: "Showing message history."});
+    for (var i=0;i<history[data.channel];++i) {
+      socket.emit('info', history[data.channel][i]);
+    }
+    socket.emit('info', {msg: "End of message history."});
+  }
+}
 
 function printChannelUserList(socket,data) {
   socket.emit('info', {msg: userListMsg.replace("%s",usersList[data.channel].join(", "))});
@@ -78,10 +90,12 @@ module.exports.run = function (worker) {
             username = assumedUsername;
           }
           socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: true});
+          printChannelHistory(socket,data);
           socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         });
       } else {
         socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: false});
+        printChannelHistory(socket,data);
         socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         socket.emit('info', {msg: registerMsg});
       }
@@ -103,6 +117,12 @@ module.exports.run = function (worker) {
           data.time = time.getTime();
           data.type = "message";
           data.isRegistered = authToken.isRegistered;
+          if (data.channel in history) {
+            history[data.channel].push(data);
+            history[data.channel] = history[data.channel].slice(-historyLength);
+          } else {
+            history[data.channel] = [data];
+          }
           scServer.global.publish(data.channel, data);
         }
       }
