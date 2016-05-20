@@ -90,12 +90,10 @@ module.exports.run = function (worker) {
             username = assumedUsername;
           }
           socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: true});
-          printChannelHistory(socket,data);
           socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         });
       } else {
         socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: false});
-        printChannelHistory(socket,data);
         socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         socket.emit('info', {msg: registerMsg});
       }
@@ -139,6 +137,7 @@ module.exports.run = function (worker) {
         } else {
           usersList[data] = [authToken.username];
         }
+        printChannelHistory(socket,{channel:data});
         scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
         printChannelUserList(socket,{channel:data});
       }
