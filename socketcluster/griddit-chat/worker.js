@@ -102,6 +102,7 @@ module.exports.run = function (worker) {
           data.color = authToken.color;
           data.time = time.getTime();
           data.type = "message";
+          data.isRegistered = authToken.isRegistered;
           scServer.global.publish(data.channel, data);
         }
       }
