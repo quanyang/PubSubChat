@@ -72,11 +72,11 @@ module.exports.run = function (worker) {
           if (hash == data[data.length-1]) {
             username = assumedUsername;
           }
-          socket.setAuthToken({username: username, color: generateRandomColor()});
+          socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: true});
           socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         });
       } else {
-        socket.setAuthToken({username: username, color: generateRandomColor()});
+        socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: false});
         socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         socket.emit('info', {msg: registerMsg});
       }

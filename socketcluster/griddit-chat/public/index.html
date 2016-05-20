@@ -122,22 +122,21 @@
       insertMessage("<div class=\"info\">"+msg+"</div>");
     };
 
-    function renderMessage(msg,time,color,username,type) {
+    function renderMessage(msg,time,color,username,type,isRegistered=false) {
       try {
         var m = msg;
         var t = time;
-                var isRegistered = false;// (m[1][0] == "*");
 
-                if (type=="message") {
-                  insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>"+htmlEncode(username.substring(1,21)):htmlEncode(username.substring(0,20)))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
-                } else if (type=="info") {
-                  info(m);
-                }
-              } catch (e){
-              }
-            };
-          }
+        if (type=="message") {
+          insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>"+htmlEncode(username.substring(1,21)):htmlEncode(username.substring(0,20)))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
+        } else if (type=="info") {
+          info(m);
+        }
+      } catch (e){
+      }
+    };
+  }
 
-          </script>
-        </body>
-        </html>
+  </script>
+</body>
+</html>
