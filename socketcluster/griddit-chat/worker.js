@@ -19,7 +19,7 @@ var history = {};
 var historyLength = 2;
 
 function printChannelHistory(socket,data) {
-  if (history[data.channel].length > 0) {
+  if (data.channel in history && history[data.channel].length > 0) {
     socket.emit('info', {msg: "Showing message history."});
     for (var i=0;i<history[data.channel];++i) {
       socket.emit('info', history[data.channel][i]);
