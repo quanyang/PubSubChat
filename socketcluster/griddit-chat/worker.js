@@ -10,26 +10,45 @@ var disconnectMsg = "Info: %s has left the chatroom.";
 var welcomeMsg = "You are %s!";
 var registerMsg = "Register <a href='http://griddit.io/users/new'>here</a> for your own unique username!";
 var userListMsg = "Users online: %s";
+var startMsgHistory = "Showing message history.";
+var endMsgHistory = "End of message history.";
+var commandsMsg = "The following commands are available: %s";
+
 var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
-var commands = {"/who":printChannelUserList};
+var commands = {"/who":printChannelUserList,"/help":printAvailableCommands};
 var usersList = {};
 var history = {};
 var historyLength = 100;
 
+function printAvailableCommands(socket,data) {
+  var commandsAvailable = commands.keys().join(', ');
+  socket.emit('info', commandsMsg.replace("%s",commandsAvailable));
+}
+
 function printChannelHistory(socket,data) {
   if (data.channel in history && history[data.channel].length > 0) {
-    socket.emit('info', {msg: "Showing message history."});
-    for (var i=0;i<history[data.channel].length;++i) {
+    socket.emit('info', {msg: startMsgHistory});
+    for (var i = 0; i < history[data.channel].length; ++i) {
       socket.emit('info', history[data.channel][i]);
     }
-    socket.emit('info', {msg: "End of message history."});
+    socket.emit('info', {msg: endMsgHistory});
   }
 }
 
 function printChannelUserList(socket,data) {
   socket.emit('info', {msg: userListMsg.replace("%s",usersList[data.channel].join(", "))});
+}
+
+function htmlEscape(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\//g, '&#x2F;');
 }
 
 function generateRandomColor() {
@@ -89,7 +108,7 @@ module.exports.run = function (worker) {
           if (hash == usernameParts[usernameParts.length-1]) {
             username = assumedUsername;
           }
-          socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: true});
+          socket.setAuthToken({username: htmlEscape(username), color: generateRandomColor(), isRegistered: true});
           socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         });
       } else {
@@ -140,6 +159,7 @@ module.exports.run = function (worker) {
         printChannelHistory(socket,{channel:data});
         scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
         printChannelUserList(socket,{channel:data});
+        printAvailableCommands(socket,{channel:data});
       }
     });
 
