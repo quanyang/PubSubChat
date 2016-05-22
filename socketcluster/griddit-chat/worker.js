@@ -23,7 +23,7 @@ var history = {};
 var historyLength = 100;
 
 function printAvailableCommands(socket,data) {
-  var commandsAvailable = commands.keys().join(', ');
+  var commandsAvailable = Object.keys(commands).join(', ');
   socket.emit('info', commandsMsg.replace("%s",commandsAvailable));
 }
 
