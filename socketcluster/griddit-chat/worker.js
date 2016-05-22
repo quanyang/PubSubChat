@@ -28,7 +28,8 @@ var historyLength = 100;
 
 function selfActionCommand(scServer,socket,data) {
   var dataParts = data.msg.split(" ");
-  if (dataParts.length > 1) {
+  var authToken = socket.getAuthToken();
+  if (dataParts.length > 1 && authToken) {
     var action = dataParts.slice(1).join(" "); 
     scServer.global.publish(data, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
   }
