@@ -27,8 +27,11 @@ var history = {};
 var historyLength = 100;
 
 function selfActionCommand(scServer,socket,data) {
-  var action = data.msg.split(" ").slice(1).join(" "); 
-  scServer.global.publish(data, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
+  var dataParts = data.msg.split(" ");
+  if (dataParts.length > 1) {
+    var action = dataParts.slice(1).join(" "); 
+    scServer.global.publish(data, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
+  }
 }
 
 function printAvailableCommands(scServer,socket,data) {
@@ -46,7 +49,7 @@ function printChannelHistory(scServer,socket,data) {
   }
 }
 
-function printChannelUserList(socket,data) {
+function printChannelUserList(scServer,socket,data) {
   socket.emit('info', {msg: userListMsg.replace("%s",usersList[data.channel].join(", "))});
 }
 
