@@ -17,10 +17,19 @@ var commandsMsg = "The following commands are available: %s";
 var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
-var commands = {"/who":printChannelUserList,"/help":printAvailableCommands};
+var commands = { 
+  "/who":printChannelUserList,
+  "/help":printAvailableCommands,
+  "/me":selfActionCommand
+};
 var usersList = {};
 var history = {};
 var historyLength = 100;
+
+function selfActionCommand(socket,data) {
+  var action = data.msg.split(" ").slice(1).join(" "); 
+  scServer.global.publish(data, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
+}
 
 function printAvailableCommands(socket,data) {
   var commandsAvailable = Object.keys(commands).join(', ');
