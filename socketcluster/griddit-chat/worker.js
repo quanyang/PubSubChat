@@ -24,7 +24,7 @@ var historyLength = 100;
 
 function printAvailableCommands(socket,data) {
   var commandsAvailable = Object.keys(commands).join(', ');
-  socket.emit('info', commandsMsg.replace("%s",commandsAvailable));
+  socket.emit('info', {msg : commandsMsg.replace("%s",commandsAvailable)});
 }
 
 function printChannelHistory(socket,data) {
