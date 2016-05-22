@@ -31,7 +31,7 @@ function selfActionCommand(scServer,socket,data) {
   var authToken = socket.getAuthToken();
   if (dataParts.length > 1 && authToken) {
     var action = dataParts.slice(1).join(" "); 
-    scServer.global.publish(data, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
+    scServer.global.publish(data.channel, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
   }
 }
 
