@@ -26,17 +26,17 @@ var usersList = {};
 var history = {};
 var historyLength = 100;
 
-function selfActionCommand(socket,data) {
+function selfActionCommand(scServer,socket,data) {
   var action = data.msg.split(" ").slice(1).join(" "); 
   scServer.global.publish(data, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
 }
 
-function printAvailableCommands(socket,data) {
+function printAvailableCommands(scServer,socket,data) {
   var commandsAvailable = Object.keys(commands).join(', ');
   socket.emit('info', {msg : commandsMsg.replace("%s",commandsAvailable)});
 }
 
-function printChannelHistory(socket,data) {
+function printChannelHistory(scServer,socket,data) {
   if (data.channel in history && history[data.channel].length > 0) {
     socket.emit('info', {msg: startMsgHistory});
     for (var i = 0; i < history[data.channel].length; ++i) {
@@ -135,7 +135,7 @@ module.exports.run = function (worker) {
         var msg = data.msg;
         var cmd = msg.split(" ")[0].toLowerCase();
         if (cmd in commands) {
-          commands[cmd](socket,data);
+          commands[cmd](scServer,socket,data);
         } else {
           var time = new Date();
           data.username = authToken.username;
@@ -165,10 +165,10 @@ module.exports.run = function (worker) {
         } else {
           usersList[data] = [authToken.username];
         }
-        printChannelHistory(socket,{channel:data});
+        printChannelHistory(scServer,socket,{channel:data});
         scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
-        printChannelUserList(socket,{channel:data});
-        printAvailableCommands(socket,{channel:data});
+        printChannelUserList(scServer,socket,{channel:data});
+        printAvailableCommands(scServer,socket,{channel:data});
       }
     });
 
