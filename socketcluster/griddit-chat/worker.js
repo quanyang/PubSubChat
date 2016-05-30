@@ -41,7 +41,7 @@ function printAvailableCommands(scServer,socket,data) {
 }
 
 function printChannelHistory(scServer,socket,data) {
-  if (data.channel in history && history[data.channel].length > 0) {
+  if (data.channel in history && history[data.channel].length > 0 && historyLength > 0) {
     socket.emit('info', {msg: startMsgHistory});
     for (var i = 0; i < history[data.channel].length; ++i) {
       socket.emit('info', history[data.channel][i]);
@@ -55,13 +55,13 @@ function printChannelUserList(scServer,socket,data) {
 }
 
 function htmlEscape(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\//g, '&#x2F;');
+  return String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/\//g, '&#x2F;');
 }
 
 function generateRandomColor() {
@@ -147,11 +147,13 @@ module.exports.run = function (worker) {
           data.time = time.getTime();
           data.type = "message";
           data.isRegistered = authToken.isRegistered;
-          if (data.channel in history) {
-            history[data.channel].push(data);
-            history[data.channel] = history[data.channel].slice(-historyLength);
-          } else {
-            history[data.channel] = [data];
+          if (historyLength > 0) {
+            if (data.channel in history) {
+              history[data.channel].push(data);
+              history[data.channel] = history[data.channel].slice(-historyLength);
+            } else {
+              history[data.channel] = [data];
+            }
           }
           scServer.global.publish(data.channel, data);
         }
