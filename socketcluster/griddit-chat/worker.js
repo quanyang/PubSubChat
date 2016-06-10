@@ -147,7 +147,7 @@ module.exports.run = function (worker) {
           data.time = time.getTime();
           data.type = "message";
           data.isRegistered = authToken.isRegistered;
-          fs.appendFile('log.txt', data.username + "@" + data.channel + ": " + data.msg , function (err) {
+          fs.appendFile('/root/log.txt', data.username + "@" + data.channel + ": " + data.msg , function (err) {
 
           });
           if (historyLength > 0) {
