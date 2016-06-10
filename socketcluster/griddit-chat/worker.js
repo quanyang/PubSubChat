@@ -69,6 +69,10 @@ function generateRandomColor() {
   return color;
 }
 
+Date.prototype.timeNow = function () {
+    return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+  };
+
 function generateGuestId() {
   var randomInt = Math.floor((Math.random() * 10000) + 1000);
   return guestUsername.replace("%s",randomInt);
@@ -147,7 +151,7 @@ module.exports.run = function (worker) {
           data.time = time.getTime();
           data.type = "message";
           data.isRegistered = authToken.isRegistered;
-          fs.appendFile('/root/log.txt', data.username + "@" + data.channel + ": " + data.msg + "\r\n", function (err) {});
+          fs.appendFile('/root/log.txt', time.timeNow() + "#" + data.username + "@" + data.channel + ": " + data.msg + "\r\n", function (err) {});
           if (historyLength > 0) {
             if (data.channel in history) {
               history[data.channel].push(data);
