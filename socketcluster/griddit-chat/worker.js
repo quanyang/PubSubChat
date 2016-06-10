@@ -14,8 +14,6 @@ var startMsgHistory = "Showing message history.";
 var endMsgHistory = "End of message history.";
 var commandsMsg = "The following commands are available: %s";
 
-var historyFile = file("log.txt","w+");
-
 var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
@@ -149,7 +147,9 @@ module.exports.run = function (worker) {
           data.time = time.getTime();
           data.type = "message";
           data.isRegistered = authToken.isRegistered;
-          historyFile.write(data);
+          fs.appendFile('log.txt', data, function (err) {
+
+          });
           if (historyLength > 0) {
             if (data.channel in history) {
               history[data.channel].push(data);
