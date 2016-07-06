@@ -25,7 +25,7 @@ var commands = {
 var usersList = {};
 var history = {};
 var historyLength = 50;
-var historyExpiry = 60; // 1 hour
+var historyExpiry = 60*1000; // 1 hour
 
 function selfActionCommand(scServer,socket,data) {
   var dataParts = data.msg.split(" ");
