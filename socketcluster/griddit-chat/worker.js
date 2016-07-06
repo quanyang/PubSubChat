@@ -24,7 +24,7 @@ var commands = {
 };
 var usersList = {};
 var history = {};
-var historyLength = 0;
+var historyLength = 50;
 
 function selfActionCommand(scServer,socket,data) {
   var dataParts = data.msg.split(" ");
