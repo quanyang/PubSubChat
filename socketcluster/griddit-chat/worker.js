@@ -25,6 +25,7 @@ var commands = {
 var usersList = {};
 var history = {};
 var historyLength = 50;
+var historyExpiry = 60; // 1 hour
 
 function selfActionCommand(scServer,socket,data) {
   var dataParts = data.msg.split(" ");
@@ -43,8 +44,11 @@ function printAvailableCommands(scServer,socket,data) {
 function printChannelHistory(scServer,socket,data) {
   if (data.channel in history && history[data.channel].length > 0 && historyLength > 0) {
     socket.emit('info', {msg: startMsgHistory});
+    var currTime = time.getTime()
     for (var i = 0; i < history[data.channel].length; ++i) {
-      socket.emit('info', history[data.channel][i]);
+      if (currTime - history[data.channel][i].time <= historyExpiry) {
+        socket.emit('info', history[data.channel][i]);
+      }
     }
     socket.emit('info', {msg: endMsgHistory});
   }
@@ -70,8 +74,8 @@ function generateRandomColor() {
 }
 
 Date.prototype.timeNow = function () {
-    return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
-  };
+  return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+};
 
 function generateGuestId() {
   var randomInt = Math.floor((Math.random() * 10000) + 1000);
@@ -165,36 +169,36 @@ module.exports.run = function (worker) {
       }
     });
 
-    socket.on('subscribe', function (data) {
-      if (!authToken) {
-        authToken = socket.getAuthToken();
-      }
-      if (authToken){
-        if (data in usersList) {
-          usersList[data].push(authToken.username);
-        } else {
-          usersList[data] = [authToken.username];
-        }
-        printChannelHistory(scServer,socket,{channel:data});
-        scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
-        printChannelUserList(scServer,socket,{channel:data});
-        printAvailableCommands(scServer,socket,{channel:data});
-      }
-    });
+socket.on('subscribe', function (data) {
+  if (!authToken) {
+    authToken = socket.getAuthToken();
+  }
+  if (authToken){
+    if (data in usersList) {
+      usersList[data].push(authToken.username);
+    } else {
+      usersList[data] = [authToken.username];
+    }
+    printChannelHistory(scServer,socket,{channel:data});
+    scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
+    printChannelUserList(scServer,socket,{channel:data});
+    printAvailableCommands(scServer,socket,{channel:data});
+  }
+});
 
-    socket.on('unsubscribe', function (data) {
-      if (!authToken) {
-        authToken = socket.getAuthToken();
-      }
-      if (authToken){
-        if (data in usersList) {
-          var index = usersList[data].indexOf(authToken.username);
-          usersList[data].splice(index,1);
-        }
-        scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
-      }
-    });
+socket.on('unsubscribe', function (data) {
+  if (!authToken) {
+    authToken = socket.getAuthToken();
+  }
+  if (authToken){
+    if (data in usersList) {
+      var index = usersList[data].indexOf(authToken.username);
+      usersList[data].splice(index,1);
+    }
+    scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
+  }
+});
 
-  });
+});
 
 };
