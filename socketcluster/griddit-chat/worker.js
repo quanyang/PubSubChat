@@ -44,6 +44,7 @@ function printAvailableCommands(scServer,socket,data) {
 function printChannelHistory(scServer,socket,data) {
   if (data.channel in history && history[data.channel].length > 0 && historyLength > 0) {
     socket.emit('info', {msg: startMsgHistory});
+    var time = new Date();
     var currTime = time.getTime()
     for (var i = 0; i < history[data.channel].length; ++i) {
       if (currTime - history[data.channel][i].time <= historyExpiry) {
