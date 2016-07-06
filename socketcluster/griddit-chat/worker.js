@@ -177,37 +177,35 @@ module.exports.run = function (worker) {
       }
     });
 
-socket.on('subscribe', function (data) {
-  if (!authToken) {
-    authToken = socket.getAuthToken();
-  }
-  if (authToken){
-    if (data in usersList) {
-      usersList[data].push(authToken.username);
-    } else {
-      usersList[data] = [authToken.username];
-    }
-    printChannelHistory(scServer,socket,{channel:data});
-    scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
-    printChannelUserList(scServer,socket,{channel:data});
-    printAvailableCommands(scServer,socket,{channel:data});
-    printMessageOfTheDay(scServer,socket,{channel:data});
-  }
-});
+    socket.on('subscribe', function (data) {
+      if (!authToken) {
+        authToken = socket.getAuthToken();
+      }
+      if (authToken){
+        if (data in usersList) {
+          usersList[data].push(authToken.username);
+        } else {
+          usersList[data] = [authToken.username];
+        }
+        printChannelHistory(scServer,socket,{channel:data});
+        scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
+        printChannelUserList(scServer,socket,{channel:data});
+        printAvailableCommands(scServer,socket,{channel:data});
+        printMessageOfTheDay(scServer,socket,{channel:data});
+      }
+    });
 
-socket.on('unsubscribe', function (data) {
-  if (!authToken) {
-    authToken = socket.getAuthToken();
-  }
-  if (authToken){
-    if (data in usersList) {
-      var index = usersList[data].indexOf(authToken.username);
-      usersList[data].splice(index,1);
-    }
-    scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
-  }
-});
-
-});
-
+    socket.on('unsubscribe', function (data) {
+      if (!authToken) {
+        authToken = socket.getAuthToken();
+      }
+      if (authToken){
+        if (data in usersList) {
+          var index = usersList[data].indexOf(authToken.username);
+          usersList[data].splice(index,1);
+        }
+        scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
+      }
+    });
+  });
 };
