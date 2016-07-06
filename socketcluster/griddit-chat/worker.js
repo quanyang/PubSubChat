@@ -9,6 +9,7 @@ var connectMsg = "Info: %s has joined the chatroom.";
 var disconnectMsg = "Info: %s has left the chatroom.";
 var welcomeMsg = "You are %s!";
 var registerMsg = "Register <a href='http://griddit.io/users/new'>here</a> for your own unique username!";
+var motd = "Updates! Message history expires after 1 hour. /who has been fixed, no more ghost user. - QuanYang"
 var userListMsg = "Users online: %s";
 var startMsgHistory = "Showing message history.";
 var endMsgHistory = "End of message history.";
@@ -25,7 +26,7 @@ var commands = {
 var usersList = {};
 var history = {};
 var historyLength = 50;
-var historyExpiry = 60*1000; // 1 hour
+var historyExpiry = 60*60*1000; // 1 hour
 
 function selfActionCommand(scServer,socket,data) {
   var dataParts = data.msg.split(" ");
@@ -33,6 +34,12 @@ function selfActionCommand(scServer,socket,data) {
   if (dataParts.length > 1 && authToken) {
     var action = dataParts.slice(1).join(" "); 
     scServer.global.publish(data.channel, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
+  }
+}
+
+function printMessageOfTheDay(scServer,socket,data) {
+  if (motd) {
+    socket.emit('info', {msg : motd});
   }
 }
 
@@ -184,6 +191,7 @@ socket.on('subscribe', function (data) {
     scServer.global.publish(data, {type: "info", msg: connectMsg.replace('%s',authToken.username)});
     printChannelUserList(scServer,socket,{channel:data});
     printAvailableCommands(scServer,socket,{channel:data});
+    printMessageOfTheDay(scServer,socket,{channel:data});
   }
 });
 
