@@ -189,7 +189,7 @@ module.exports.run = function (worker) {
       if (authToken){
         if (data in usersList) {
           var index = usersList[data].indexOf(authToken.username);
-          usersList.splice(index,1);
+          usersList[data].splice(index,1);
         }
         scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
       }
