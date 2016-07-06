@@ -51,7 +51,7 @@ function printChannelHistory(scServer,socket,data) {
 }
 
 function printChannelUserList(scServer,socket,data) {
-  socket.emit('info', {msg: userListMsg.replace("%s",usersList[data.channel].join(", "))});
+  socket.emit('info', {msg: userListMsg.replace("%s",Array.from(new Set(usersList[data.channel])).join(", "))});
 }
 
 function htmlEscape(str) {
@@ -171,7 +171,6 @@ module.exports.run = function (worker) {
       }
       if (authToken){
         if (data in usersList) {
-          usersList[data] = usersList[data].filter(function(value) { return value != authToken.username; });
           usersList[data].push(authToken.username);
         } else {
           usersList[data] = [authToken.username];
@@ -189,7 +188,8 @@ module.exports.run = function (worker) {
       }
       if (authToken){
         if (data in usersList) {
-          usersList[data] = usersList[data].filter(function(value) { return value != authToken.username; });
+          var index = usersList[data].indexOf(authToken.username);
+          usersList.splice(index,1);
         }
         scServer.global.publish(data, {type: "info", msg: disconnectMsg.replace('%s',authToken.username)});
       }
