@@ -9,7 +9,7 @@ var connectMsg = "Info: %s has joined the chatroom.";
 var disconnectMsg = "Info: %s has left the chatroom.";
 var welcomeMsg = "You are %s!";
 var registerMsg = "Register <a href='http://griddit.io/users/new'>here</a> for your own unique username!";
-var motd = "<div style='color:#08c'>Updates:</br>Message history now expires after 1 hour.</br>/who has been fixed, no more ghost user.</br>- Quanyang</div>";
+var motd = "";
 var userListMsg = "Users online: %s";
 var startMsgHistory = "Showing message history.";
 var endMsgHistory = "End of message history.";
