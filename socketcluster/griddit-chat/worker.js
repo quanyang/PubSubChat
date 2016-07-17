@@ -113,7 +113,7 @@ module.exports.run = function (worker) {
   httpServer.on('request', app);
 
   scServer.on('connection', function (socket) {  
-    var authToken = socket.getAuthToken();
+    var authToken = undefined;
     //Blocks publish except for server.
     scServer.addMiddleware(scServer.MIDDLEWARE_PUBLISH_IN, function (req, next) {
       next(true);
