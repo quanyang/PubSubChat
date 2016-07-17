@@ -40,36 +40,33 @@ function initChat() {
 		connected();
 	});
 
-  socket.on('info', function(data) {
-    message = data;
-    if (message.type == "message") {
-      var t = new Date(message.time);
-      renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type,message.isRegistered);
-    } else {
-      info(message.msg);
-    }
-  });
+	socket.on('info', function(data) {
+		message = data;
+		if (message.type == "message") {
+			var t = new Date(message.time);
+			renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type,message.isRegistered);
+		} else {
+			info(message.msg);
+		}
+	});
 
 	socket.on('subscribe', function(data) {
-    info("Welcome to the chat!");
-    if (socket.watchers(data).length == 0) { 
-  		socket.watch(data, function (data) {  
-  			message = data;
-  			if (message.type == "info") {
-  				info(message.msg);
-  			} else { 
-  				var t = new Date(message.time);
-  				renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type,message.isRegistered);
-  			}
-  		});
-    }
+		info("Welcome to the chat!");
+		if (socket.watchers(data).length == 0) { 
+			socket.watch(data, function (data) {  
+				message = data;
+				if (message.type == "info") {
+					info(message.msg);
+				} else { 
+					var t = new Date(message.time);
+					renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type,message.isRegistered);
+				}
+			});
+		}
 	});
 
 	socket.on('connect', function (status) {
-		if (!status.isAuthenticated) {
-			socket.emit('auth', {username:user}, function(err) {
-			});
-		} 
+		socket.emit('auth', {username:user}, function(err) {});
 	});
 
 	$(".message-box").on("keypress", function(event) {
@@ -97,21 +94,21 @@ function initChat() {
 
 	function htmlEncode(html) {
 		return document.createElement("a").appendChild( 
-				document.createTextNode(html)).parentNode.innerHTML.replace(/"/g,"\&quot\;");
+		                                               document.createTextNode(html)).parentNode.innerHTML.replace(/"/g,"\&quot\;");
 	};
 
 	function linkify(text){
 		if (text) {
 			text = text.replace(
-					/((https?\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/gi,
-					function(url){
-						var full_url = url;
-						if (!full_url.match("^https?:\/\/")) {
-							full_url = "http://" + full_url;
-						}
-						return "<a target=\"_blank\" href=\"" + full_url + "\">" + url + "</a>";
-					}
-					);
+			                    /((https?\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/gi,
+			                    function(url){
+			                    	var full_url = url;
+			                    	if (!full_url.match("^https?:\/\/")) {
+			                    		full_url = "http://" + full_url;
+			                    	}
+			                    	return "<a target=\"_blank\" href=\"" + full_url + "\">" + url + "</a>";
+			                    }
+			                    );
 		}
 		return text;
 	}
@@ -133,7 +130,7 @@ function initChat() {
 			var m = msg;
 			var t = time;
 			if (type=="message") {
-        insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>":"")+htmlEncode(username.substring(0,20))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
+				insertMessage("<div class=\"messages\"><span class=\"time\">"+t+"</span><span class=\"author chat-"+htmlEncode(color.substring(0,4))+"\">"+(isRegistered?"<i class=\"material-icons tiny\" style=\"vertical-align:baseline;font-size:10px;\">done</i>":"")+htmlEncode(username.substring(0,20))+"</span>: "+linkify(htmlEncode(m.substring(0,300)))+"</div>");
 			} else if (type=="info") {
 				info(m);
 			}

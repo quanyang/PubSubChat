@@ -126,9 +126,7 @@ module.exports.run = function (worker) {
 
     socket.on('auth', function(data,res) {
       //Validate user
-      var username = generateGuestId();
       if (data.username.substr(0,3) == "reg") {
-
         usernameParts = data.username.split("_");
         var assumedUsername = usernameParts.slice(1,usernameParts.length-1).join("_");
         getSalt(assumedUsername,function(salt) {
@@ -136,11 +134,14 @@ module.exports.run = function (worker) {
           var hash = crypto.createHmac('sha1', 'chat').update(salt+assumedUsername).digest('hex')
           if (hash == usernameParts[usernameParts.length-1]) {
             username = assumedUsername;
+          } else {
+            var username = generateGuestId();
           }
           socket.setAuthToken({username: htmlEscape(username), color: generateRandomColor(), isRegistered: true});
           socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         });
       } else {
+        var username = generateGuestId();
         socket.setAuthToken({username: username, color: generateRandomColor(), isRegistered: false});
         socket.emit('info', {msg: welcomeMsg.replace("%s",username)});
         socket.emit('info', {msg: registerMsg});
