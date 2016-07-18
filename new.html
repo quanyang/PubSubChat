@@ -19,9 +19,12 @@ String.prototype.hashCode = function() {
 function initChat() {
 	var channel = (location.origin+location.pathname).hashCode();
 	var user = typeof c_username !== "undefined"? c_username: "";
-	if (user && localStorage.getItem('chat.Username') != user) {
+	if (localStorage.getItem('chat.Username') != user) {
 		localStorage.removeItem('chat.Username');
 		localStorage.removeItem('socketCluster.authToken');
+	}
+	if (!localStorage.hasOwnProperty('chat.Username')) {
+		localStorage.setItem('chat.Username', user);	
 	}
 	var chatChannel = undefined;
 	var socket = socketCluster.connect({
@@ -47,9 +50,6 @@ function initChat() {
 	socket.on('info', function(data) {
 		message = data;
 		if (message.type == "message") {
-			if (!localStorage.hasOwnProperty('chat.Username')) {
-				localStorage.setItem('chat.Username', message.username);	
-			}
 			var t = new Date(message.time);
 			renderMessage(message.msg, t.timeNow(),message.color,message.username,message.type,message.isRegistered);
 		} else {
