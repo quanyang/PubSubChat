@@ -18,10 +18,16 @@ var commandsMsg = "The following commands are available: %s";
 var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
+var adminCommands = {
+  "/clearHistory" : clearAllHistory,
+}
+
+var admins = ["quanyang"]
+
 var commands = { 
-  "/who":printChannelUserList,
-  "/help":printAvailableCommands,
-  "/me":selfActionCommand
+  "/who" : printChannelUserList,
+  "/help" : printAvailableCommands,
+  "/me" : selfActionCommand
 };
 var usersList = {};
 var history = {};
@@ -35,6 +41,11 @@ function selfActionCommand(scServer,socket,data) {
     var action = dataParts.slice(1).join(" "); 
     scServer.global.publish(data.channel, {type: "info", msg: "%first %second".replace('%first',authToken.username).replace('%second', action)});
   }
+}
+
+function clearAllHistory(scServer,socket,data) {
+  history[data.channel] = [];
+  scServer.global.publish(data.channel, {type: "info", msg: "Channel history has been cleared."});
 }
 
 function printMessageOfTheDay(scServer,socket,data) {
@@ -157,6 +168,8 @@ module.exports.run = function (worker) {
         var cmd = msg.split(" ")[0].toLowerCase();
         if (cmd in commands) {
           commands[cmd](scServer,socket,data);
+        } else if (cmd in adminCommands && authToken.username in admins) {
+          adminCommands[cmd](scServer,socket,data);
         } else {
           var time = new Date();
           data.username = authToken.username;
