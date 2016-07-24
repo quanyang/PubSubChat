@@ -20,6 +20,7 @@ var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
 var adminCommands = {
   "/clear" : clearAllHistory,
+  "/motd" : setMotd,
 }
 
 var admins = ["quanyang"]
@@ -43,7 +44,27 @@ function selfActionCommand(scServer,socket,data) {
   }
 }
 
+function setMotd(scServer,socket,data) {
+  var authToken = socket.getAuthToken();
+  if (admins.indexOf(authToken.username.toLowerCase()) < 0) {
+    return;
+  }
+
+  var messageParts = data.msg.split(" ");
+  if (messageParts.length > 1) {
+    motd = messageParts.slice(1).join(" ");
+    printMessageOfTheDay(scServer,socket,data);
+  } else {
+    motd = "";
+  }
+}
+
 function clearAllHistory(scServer,socket,data) {
+  var authToken = socket.getAuthToken();
+  if (admins.indexOf(authToken.username.toLowerCase()) < 0) {
+    return;
+  }
+
   history[data.channel] = [];
   scServer.global.publish(data.channel, {type: "info", msg: "Channel history has been cleared."});
 }
