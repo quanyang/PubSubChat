@@ -168,7 +168,7 @@ module.exports.run = function (worker) {
         var cmd = msg.split(" ")[0].toLowerCase();
         if (cmd in commands) {
           commands[cmd](scServer,socket,data);
-        } else if (cmd in adminCommands && authToken.username.toLowerCase() in admins) {
+        } else if (cmd in adminCommands && admins.indexOf(authToken.username.toLowerCase()) > -1) {
           adminCommands[cmd](scServer,socket,data);
         } else {
           var time = new Date();
