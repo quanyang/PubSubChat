@@ -19,7 +19,7 @@ var guestUsername = "Guest_%s";
 var colors = ["d-re","l-bl","mage","red","pink","blue","teal","oran","d-pu"];
 
 var adminCommands = {
-  "/clearHistory" : clearAllHistory,
+  "/clear" : clearAllHistory,
 }
 
 var admins = ["quanyang"]
